@@ -18,7 +18,7 @@ export const renderHome = async () => {
                 </div>
                 <p class="product-desc">${p.description}</p>
                 <div class="product-price-row">
-                    <span class="product-price">$${Number(p.price).toFixed(2)}</span>
+                    <span class="product-price">₹${Number(p.price).toFixed(2)}</span>
                     <a href="/menu" data-link class="btn btn-outline btn-sm">Order</a>
                 </div>
             </div>
@@ -32,7 +32,7 @@ export const renderHome = async () => {
                 <!-- Background Image & Gradient -->
                 <div style="position: absolute; top:0; left:0; width:100%; height:100%; z-index:-1; overflow:hidden;">
                     <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to right, rgba(10,10,10,0.9) 0%, rgba(10,10,10,0.4) 100%); z-index:1;"></div>
-                    <img src="./assets/images/hero.webp" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" alt="Hero">
+                    <img src="/assets/images/hero.webp" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" alt="Hero" fetchpriority="high" decoding="sync">
                 </div>
                 
                 <div class="container slide-up">

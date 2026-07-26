@@ -1,11 +1,23 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS"
+};
+
 // This edge function is triggered by a Supabase Database Webhook whenever a new order is inserted.
 serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: corsHeaders,
+    });
+  }
+
   try {
     if (req.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405 });
+      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
     }
 
     // 1. Parse the Webhook payload from Supabase
@@ -14,7 +26,10 @@ serve(async (req) => {
     console.log("Received Webhook Payload:", payload);
 
     if (payload.type !== "INSERT" || payload.table !== "orders") {
-      return new Response(JSON.stringify({ message: "Ignored: Not an order insertion" }), { status: 200 });
+      return new Response(JSON.stringify({ message: "Ignored: Not an order insertion" }), { 
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 200 
+      });
     }
 
     const order = payload.record;
@@ -113,26 +128,15 @@ serve(async (req) => {
 
     console.log("✅ Email delivered successfully!");
 
-    // 5. [FUTURE] WhatsApp Notification Logic
-    // Architecture stub: WhatsApp API (e.g., Twilio or Meta Graph API) can be securely called here.
-    /*
-    const whatsappToken = Deno.env.get("WHATSAPP_TOKEN");
-    if (whatsappToken) {
-        console.log(`Sending WhatsApp to ${customer.phone}...`);
-        await fetch('https://graph.facebook.com/v17.0/.../messages', { ... });
-        console.log("✅ WhatsApp message dispatched.");
-    }
-    */
-
     return new Response(JSON.stringify({ success: true, message: "Notifications dispatched successfully." }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
       status: 200,
     });
 
   } catch (error) {
     console.error("❌ Edge Function Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
       status: 500,
     });
   }

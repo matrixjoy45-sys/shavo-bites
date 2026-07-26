@@ -29,7 +29,7 @@ export const renderMenu = async () => {
                     <p class="text-xs text-muted mb-sm">Ingredients: ${ingr}</p>
                     <p class="product-desc">${p.description}</p>
                     <div class="product-price-row">
-                        <span class="product-price">$${Number(p.price).toFixed(2)}</span>
+                        <span class="product-price">₹${Number(p.price).toFixed(2)}</span>
                         <button class="btn btn-primary btn-sm" onclick="window.menuActions.openCustomizeModal('${p.id}')">Add</button>
                     </div>
                 </div>
@@ -83,7 +83,7 @@ renderMenu.mount = () => {
                         <input type="checkbox" value="${ext.id}" class="extra-checkbox" data-price="${ext.price}" data-name="${ext.name}">
                         <span>${ext.name}</span>
                     </div>
-                    <span class="text-primary">+$${Number(ext.price).toFixed(2)}</span>
+                    <span class="text-primary">+₹${Number(ext.price).toFixed(2)}</span>
                 </label>
             `).join('');
 
@@ -114,7 +114,7 @@ renderMenu.mount = () => {
                     </div>
                     
                     <button class="btn btn-primary w-full" id="add-to-cart-confirm" style="width:100%;">
-                        Add to Cart - $<span id="modal-total-price">${Number(product.price).toFixed(2)}</span>
+                        Add to Cart - ₹<span id="modal-total-price">${Number(product.price).toFixed(2)}</span>
                     </button>
                 </div>
             `;

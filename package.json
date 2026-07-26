@@ -1,6 +1,18 @@
 {
+  "name": "shavo-bites",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "pg": "^8.22.0",
     "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "supabase": "^2.109.1",
+    "vite": "^5.0.0"
   }
 }

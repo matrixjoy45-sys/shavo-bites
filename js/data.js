@@ -8,7 +8,7 @@ const mockProducts = [
         description: 'Juicy spiced chicken, fresh vegetables, garlic sauce wrapped in premium pita.',
         price: 12.99,
         category: 'shawarma',
-        image: './assets/images/hero.webp', 
+        image: '/assets/images/hero.webp', 
         spiceLevel: 'medium',
         ingredients: ['Chicken', 'Garlic Sauce', 'Pickles', 'Fries inside', 'Pita']
     },
@@ -18,7 +18,7 @@ const mockProducts = [
         description: 'Tender beef slices, tahini sauce, parsley, and onions in fresh pita.',
         price: 14.99,
         category: 'shawarma',
-        image: './assets/images/beef.webp',
+        image: '/assets/images/beef.webp',
         spiceLevel: 'mild',
         ingredients: ['Beef', 'Tahini', 'Onions', 'Parsley', 'Tomatoes']
     },
@@ -28,7 +28,7 @@ const mockProducts = [
         description: 'Crispy fried calamari and grilled squid rings with our signature garlic sauce.',
         price: 16.99,
         category: 'shawarma',
-        image: './assets/images/squid.webp',
+        image: '/assets/images/squid.webp',
         spiceLevel: 'spicy',
         ingredients: ['Squid', 'Garlic Sauce', 'Lettuce', 'Spicy Mayo']
     },
@@ -38,7 +38,7 @@ const mockProducts = [
         description: 'Rich dates blended with premium milk, topped with whipped cream and nuts.',
         price: 8.99,
         category: 'drinks',
-        image: './assets/images/dates.webp',
+        image: '/assets/images/dates.webp',
         spiceLevel: 'none',
         ingredients: ['Dates', 'Milk', 'Cream', 'Nuts']
     },
@@ -71,6 +71,8 @@ export const fetchMenuItems = async () => {
         const { data, error } = await supabase
             .from('menu_items')
             .select('*')
+            .is('deleted_at', null)
+            .eq('is_active', true)
             .order('category', { ascending: true });
             
         if (error) throw error;

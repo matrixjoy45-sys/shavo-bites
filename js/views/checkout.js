@@ -108,19 +108,18 @@ export const renderCheckout = async () => {
                             </div>
                             
                             <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: var(--space-md);">
-                                <div class="flex justify-between mb-sm text-sm text-muted">
-                                    <span>Subtotal</span>
-                                    <span>$${subtotal.toFixed(2)}</span>
-                                </div>
-                                <div class="flex justify-between mb-md text-sm text-muted">
-                                    <span>Delivery Charge</span>
-                                    <span>$${delivery.toFixed(2)}</span>
-                                </div>
-                                <div class="flex justify-between font-bold text-lg">
-                                    <span>Grand Total</span>
-                                    <span class="text-primary">$${total.toFixed(2)}</span>
-                                </div>
-                            </div>
+                                <div class="flex justify-between items-center mb-sm">
+                            <span class="text-muted">Subtotal</span>
+                            <span>₹${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-md pb-md" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span class="text-muted">Delivery</span>
+                            <span>₹${delivery.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between items-center font-bold text-lg">
+                            <span>Total</span>
+                            <span class="text-primary font-bold">₹${total.toFixed(2)}</span>
+                        </div>        </div>
                         </div>
                     </div>
                 </div>
@@ -206,6 +205,22 @@ renderCheckout.mount = () => {
                 if (ordError) {
                     console.error("Supabase Order Error:", ordError);
                     throw new Error(`Order Insert Failed: ${ordError.message || JSON.stringify(ordError)}`);
+                }
+                
+                // 3. Invoke Edge Function for Email Notification
+                console.log("Invoking order-notification Edge Function...");
+                const { data: funcData, error: funcError } = await supabase.functions.invoke('order-notification', {
+                    body: {
+                        type: 'INSERT',
+                        table: 'orders',
+                        record: orderData
+                    }
+                });
+                
+                if (funcError) {
+                    console.error("❌ Edge Function Invocation Failed:", funcError);
+                } else {
+                    console.log("✅ Edge Function Invoked Successfully:", funcData);
                 }
                 
             } catch (err) {

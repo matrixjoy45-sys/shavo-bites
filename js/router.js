@@ -3,6 +3,12 @@ import { renderHome } from './views/home.js';
 import { renderMenu } from './views/menu.js';
 import { renderCheckout } from './views/checkout.js';
 import { renderProfile } from './views/profile.js';
+import { renderAdminLogin } from './views/admin/login.js';
+import { renderAdminDashboard } from './views/admin/dashboard.js';
+import { renderAdminMenu } from './views/admin/menu.js';
+import { renderAdminSettings } from './views/admin/settings.js';
+import { renderAdminBanners } from './views/admin/banners.js';
+import { supabase } from './supabase.js';
 
 class Router {
     constructor() {
@@ -10,7 +16,12 @@ class Router {
             '/': renderHome,
             '/menu': renderMenu,
             '/checkout': renderCheckout,
-            '/profile': renderProfile
+            '/profile': renderProfile,
+            '/admin': renderAdminLogin,
+            '/admin/dashboard': renderAdminDashboard,
+            '/admin/menu': renderAdminMenu,
+            '/admin/settings': renderAdminSettings,
+            '/admin/banners': renderAdminBanners
         };
         
         this.rootElement = document.getElementById('router-view');
@@ -41,6 +52,28 @@ class Router {
         // For local development, assume root is /
         if (!this.routes[path]) {
             path = '/'; // fallback to home
+        }
+        
+        // Admin Auth Middleware
+        if (path.startsWith('/admin')) {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (path === '/admin') {
+                if (session) {
+                    this.navigate('/admin/dashboard');
+                    return;
+                }
+            } else {
+                if (!session) {
+                    this.navigate('/admin');
+                    return;
+                }
+            }
+        }
+        
+        // Auto-close cart drawer on navigation
+        if (window.appActions && typeof window.appActions.toggleCart === 'function') {
+            window.appActions.toggleCart(false);
         }
         
         const renderFunction = this.routes[path];

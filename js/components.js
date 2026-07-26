@@ -114,8 +114,8 @@ export const renderCartDrawer = () => {
                     <div class="text-xs text-muted mb-sm">
                         ${item.extras.map(e => `+ ${e.name}`).join(', ')}
                     </div>
-                    <div class="flex justify-between items-center">
-                        <div class="text-primary font-bold">$${(item.product.price + item.extras.reduce((s,e)=>s+e.price,0)).toFixed(2)}</div>
+                    <div class="flex justify-between items-center mt-sm">
+                        <div class="text-primary font-bold">₹${(item.product.price + item.extras.reduce((s,e)=>s+e.price,0)).toFixed(2)}</div>
                         <div class="qty-control">
                             <button class="qty-btn" onclick="window.appActions.updateQty('${item.cartItemId}', -1)">${Icons.Minus}</button>
                             <span class="qty-val">${item.quantity}</span>
@@ -139,17 +139,17 @@ export const renderCartDrawer = () => {
             </div>
             ${cart.length > 0 ? `
             <div class="cart-footer">
-                <div class="flex justify-between mb-sm text-sm">
-                    <span>Subtotal</span>
-                    <span>$${total.toFixed(2)}</span>
+                <div class="flex justify-between items-center mb-sm">
+                    <span class="text-muted">Subtotal</span>
+                    <span>₹${total.toFixed(2)}</span>
                 </div>
-                <div class="flex justify-between mb-md text-sm text-muted">
-                    <span>Delivery</span>
-                    <span>$2.99</span>
+                <div class="flex justify-between items-center mb-md pb-md" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span class="text-muted">Delivery</span>
+                    <span>₹2.99</span>
                 </div>
-                <div class="flex justify-between mb-lg font-bold text-lg">
+                <div class="flex justify-between items-center mb-lg font-bold text-lg">
                     <span>Total</span>
-                    <span class="text-primary">$${(total + 2.99).toFixed(2)}</span>
+                    <span class="text-primary">₹${(total + 2.99).toFixed(2)}</span>
                 </div>
                 <a href="/checkout" data-link class="btn btn-primary" style="width:100%;" id="cart-checkout-btn">Proceed to Checkout</a>
             </div>
