@@ -12,6 +12,23 @@ export const Icons = {
 };
 
 export const renderHeader = () => {
+    const state = store.getState();
+    const user = state.user;
+    
+    const userLink = user 
+        ? `<div class="user-dropdown-container">
+             <a href="/profile" data-link class="nav-link flex items-center gap-xs" style="padding: 0.5rem 0;">
+               <img src="${state.customerProfile?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(state.customerProfile?.name || user.email)}" style="width:28px;height:28px;border-radius:50%; object-fit:cover; border: 2px solid var(--color-primary);" alt="Profile">
+             </a>
+             <div class="user-dropdown-menu">
+                 <a href="/my-orders" data-link class="dropdown-item">My Orders</a>
+                 <a href="/addresses" data-link class="dropdown-item">Addresses</a>
+                 <a href="/profile" data-link class="dropdown-item">Profile</a>
+                 <a href="#" id="nav-logout-btn" class="dropdown-item" style="color: var(--color-error); border-top: 1px solid rgba(255,255,255,0.1); margin-top: 0.25rem; padding-top: 0.75rem;">Logout</a>
+             </div>
+           </div>`
+        : `<a href="/login" data-link class="nav-link font-bold text-primary">Login</a>`;
+
     return `
         <div class="container flex justify-between items-center">
             <a href="/" data-link class="logo flex items-center">
@@ -21,13 +38,13 @@ export const renderHeader = () => {
                 </picture>
             </a>
             
-            <nav class="hidden md:flex gap-lg">
+            <nav class="hidden md:flex gap-lg items-center">
                 <a href="/" data-link class="nav-link">Home</a>
                 <a href="/menu" data-link class="nav-link">Menu</a>
-                <a href="/profile" data-link class="nav-link">Profile</a>
             </nav>
             
             <div class="flex items-center gap-md">
+                ${userLink}
                 <button class="cart-btn" id="open-cart-btn">
                     ${Icons.Cart}
                     <span class="cart-badge" id="cart-count-badge">0</span>
@@ -154,6 +171,44 @@ export const renderCartDrawer = () => {
                 <a href="/checkout" data-link class="btn btn-primary" style="width:100%;" id="cart-checkout-btn">Proceed to Checkout</a>
             </div>
             ` : ''}
+        </div>
+    `;
+};
+
+export const OrderCard = (order) => {
+    const orderDate = new Date(order.created_at);
+    const dateStr = orderDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const timeStr = orderDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    
+    // Preview items
+    const itemsPreview = order.items.slice(0, 2).map(item => `${item.quantity}x ${item.product.name}`).join(', ') + 
+        (order.items.length > 2 ? ` + ${order.items.length - 2} more` : '');
+
+    let statusColor = 'var(--color-text-muted)';
+    if (order.status === 'Pending') statusColor = '#f59e0b';
+    if (order.status === 'Preparing') statusColor = '#3b82f6';
+    if (order.status === 'Out for Delivery') statusColor = '#8b5cf6';
+    if (order.status === 'Delivered') statusColor = '#10b981';
+    if (order.status === 'Cancelled') statusColor = 'var(--color-error)';
+
+    return `
+        <div class="glass-card mb-md p-md" style="padding: var(--space-lg); transition: transform 0.2s ease; border-left: 3px solid ${statusColor};">
+            <div class="flex justify-between items-start mb-md pb-md" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div>
+                    <h3 class="mb-xs" style="font-size: 1.1rem;">Order #${order.id.substring(0,8).toUpperCase()}</h3>
+                    <div class="text-xs text-muted">${dateStr} &bull; ${timeStr}</div>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold text-lg text-primary mb-xs">₹${Number(order.total).toFixed(2)}</div>
+                    <span class="badge" style="background: rgba(255,255,255,0.05); color: ${statusColor}; border: 1px solid ${statusColor}33; font-size: 0.7rem;">${order.status}</span>
+                </div>
+            </div>
+            <div class="flex justify-between items-center mt-md">
+                <div class="text-sm text-muted flex-1 pr-md truncate" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <span class="mr-sm">📦</span> ${itemsPreview}
+                </div>
+                <a href="/my-orders/${order.id}" data-link class="btn btn-outline btn-sm" style="white-space: nowrap;">View Details</a>
+            </div>
         </div>
     `;
 };

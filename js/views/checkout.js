@@ -5,7 +5,7 @@ import { supabase } from '../supabase.js';
 export const renderCheckout = async () => {
     const state = store.getState();
     const cart = state.cart;
-    
+    const profile = state.customerProfile || {};
     if (cart.length === 0) {
         return `
             <div class="page-enter section container flex flex-col items-center justify-center text-center" style="min-height: 60vh;">
@@ -26,7 +26,7 @@ export const renderCheckout = async () => {
         return `
         <div class="flex justify-between mb-sm text-sm">
             <span>${item.quantity}x ${item.product.name}</span>
-            <span>$${(itemPrice * item.quantity).toFixed(2)}</span>
+            <span>₹${(itemPrice * item.quantity).toFixed(2)}</span>
         </div>
         `;
     }).join('');
@@ -45,11 +45,11 @@ export const renderCheckout = async () => {
                             <div class="grid md:grid-cols-2 gap-md">
                                 <div class="form-group">
                                     <label class="form-label">Full Name</label>
-                                    <input type="text" id="cust-name" class="form-input" required placeholder="John Doe">
+                                    <input type="text" id="cust-name" class="form-input" required placeholder="John Doe" value="${profile.name || ''}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Phone Number</label>
-                                    <input type="tel" id="cust-phone" class="form-input" required placeholder="+1 234 567 8900">
+                                    <input type="tel" id="cust-phone" class="form-input" required placeholder="+91 98765 43210" value="${profile.phone || ''}">
                                 </div>
                             </div>
                             
@@ -61,24 +61,26 @@ export const renderCheckout = async () => {
                                 </button>
                             </div>
                             
-                            <div class="grid md:grid-cols-2 gap-md">
-                                <div class="form-group">
-                                    <label class="form-label">House / Flat Number</label>
-                                    <input type="text" id="cust-house" class="form-input" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Street / Area</label>
-                                    <input type="text" id="cust-street" class="form-input" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">City</label>
-                                    <input type="text" id="cust-city" class="form-input" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">PIN Code</label>
-                                    <input type="text" id="cust-pin" class="form-input" required>
+                            <div id="checkout-address-section">
+                                <!-- Rendered dynamically by mount -->
+                                <div style="width: 100%; height: 100px; background: rgba(255,255,255,0.05); border-radius: 8px;" class="animate-pulse"></div>
+                            </div>
+                            
+                            <!-- Address Selection Modal (Hidden by default) -->
+                            <div id="checkout-address-modal" class="modal-overlay hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; padding: 1rem;">
+                                <div class="glass-card w-full" style="max-width: 500px; max-height: 80vh; overflow-y: auto; padding: var(--space-xl); position: relative;">
+                                    <button type="button" id="close-address-modal" class="btn-icon" style="position: absolute; top: 1rem; right: 1rem; color: var(--color-text-muted);">&times;</button>
+                                    <h3 class="mb-lg text-primary text-xl">Select Delivery Address</h3>
+                                    <div id="checkout-address-list" class="grid gap-md">
+                                        <!-- Addresses populated here -->
+                                    </div>
+                                    <div class="mt-lg pt-md" style="border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                                        <a href="/addresses" data-link class="btn btn-outline w-full">+ Manage Addresses</a>
+                                    </div>
                                 </div>
                             </div>
+                            
+                            <input type="hidden" id="selected-address-json" value="">
                             
                             <h3 class="mb-md mt-lg text-primary" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">Payment Method</h3>
                             <div class="form-group">
@@ -95,7 +97,7 @@ export const renderCheckout = async () => {
                             </div>
                             
                             <button type="submit" id="submit-order-btn" class="btn btn-primary mt-lg" style="width: 100%; padding: 1rem; font-size: 1.125rem;">
-                                Place Order - $${total.toFixed(2)}
+                                Place Order - ₹${total.toFixed(2)}
                             </button>
                         </form>
                     </div>
@@ -131,8 +133,108 @@ export const renderCheckout = async () => {
     `;
 };
 
-renderCheckout.mount = () => {
+let currentAddresses = [];
+let selectedAddress = null;
+
+renderCheckout.mount = async () => {
+    const state = store.getState();
+    const profile = state.customerProfile;
+    
+    if (profile) {
+        try {
+            const { data } = await supabase
+                .from('customer_addresses')
+                .select('*')
+                .eq('customer_id', profile.id)
+                .order('is_default', { ascending: false });
+            currentAddresses = data || [];
+            selectedAddress = currentAddresses.length > 0 ? currentAddresses[0] : null;
+        } catch(e) {
+            console.error('Failed to load addresses:', e);
+        }
+    }
+    
     const form = document.getElementById('checkout-form');
+    
+    // Render the initial selected address
+    const renderAddressSection = () => {
+        const section = document.getElementById('checkout-address-section');
+        const hiddenInput = document.getElementById('selected-address-json');
+        
+        if (!section || !hiddenInput) return;
+        
+        if (selectedAddress) {
+            hiddenInput.value = JSON.stringify(selectedAddress);
+            section.innerHTML = `
+                <div class="glass-card p-md mb-md" style="background: rgba(0,0,0,0.2); border: 1px solid var(--color-primary);">
+                    <div class="flex justify-between items-start">
+                        <div class="text-sm">
+                            <div class="flex items-center gap-xs mb-xs">
+                                <span class="badge-default" style="background: var(--color-primary); color: #000; font-size: 0.6rem; padding: 2px 6px; border-radius: 8px; font-weight: bold;">${selectedAddress.type}</span>
+                                <span class="font-bold text-text-main">${selectedAddress.name}</span>
+                            </div>
+                            <p class="text-muted">${selectedAddress.house}, ${selectedAddress.street}</p>
+                            <p class="text-muted">${selectedAddress.area}, ${selectedAddress.city}</p>
+                            <p class="text-muted">${selectedAddress.state} - ${selectedAddress.pin}</p>
+                        </div>
+                        <button type="button" class="btn btn-outline btn-sm" id="btn-change-address" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Change</button>
+                    </div>
+                </div>
+            `;
+            
+            // Re-bind change button
+            document.getElementById('btn-change-address')?.addEventListener('click', openAddressModal);
+        } else {
+            hiddenInput.value = '';
+            section.innerHTML = `
+                <div class="glass-card p-md mb-md text-center" style="background: rgba(0,0,0,0.2); border: 1px dashed rgba(255,255,255,0.2);">
+                    <p class="text-muted mb-sm text-sm">No delivery address saved.</p>
+                    <a href="/addresses" data-link class="btn btn-primary btn-sm">Add Address</a>
+                </div>
+            `;
+        }
+    };
+    
+    // Address Modal Logic
+    const openAddressModal = () => {
+        const modal = document.getElementById('checkout-address-modal');
+        const list = document.getElementById('checkout-address-list');
+        
+        list.innerHTML = currentAddresses.map(addr => `
+            <div class="glass-card p-md cursor-pointer address-select-option ${selectedAddress?.id === addr.id ? 'active-address' : ''}" data-id="${addr.id}" style="transition: all 0.2s; ${selectedAddress?.id === addr.id ? 'border-color: var(--color-primary);' : ''}">
+                <div class="flex justify-between items-center mb-xs">
+                    <span class="font-bold text-text-main">${addr.type}</span>
+                    ${selectedAddress?.id === addr.id ? '<span class="text-primary">✓</span>' : ''}
+                </div>
+                <p class="text-sm text-muted">${addr.house}, ${addr.street}, ${addr.area}</p>
+            </div>
+        `).join('');
+        
+        // Bind selection
+        list.querySelectorAll('.address-select-option').forEach(el => {
+            el.addEventListener('click', (e) => {
+                const id = e.currentTarget.dataset.id;
+                selectedAddress = currentAddresses.find(a => a.id === id);
+                renderAddressSection();
+                closeAddressModal();
+            });
+        });
+        
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.style.opacity = '1', 10);
+    };
+    
+    const closeAddressModal = () => {
+        const modal = document.getElementById('checkout-address-modal');
+        modal.style.opacity = '0';
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    };
+    
+    document.getElementById('close-address-modal')?.addEventListener('click', closeAddressModal);
+    
+    // Initial render
+    renderAddressSection();
+    
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -147,6 +249,31 @@ renderCheckout.mount = () => {
             const delivery = 2.99;
             const total = subtotal + delivery;
 
+            // Get authenticated user's customer profile
+            const profile = state.customerProfile;
+            if (!profile) {
+                alert('Could not load your profile. Please try logging in again.');
+                btn.disabled = false;
+                btn.textContent = 'Place Order - ₹' + total.toFixed(2);
+                return;
+            }
+
+            // Extract selected address from hidden input
+            const addressJson = document.getElementById('selected-address-json').value;
+            if (!addressJson) {
+                alert('Please select a delivery address');
+                btn.disabled = false;
+                btn.textContent = 'Place Order - ₹' + total.toFixed(2);
+                return;
+            }
+            
+            const addressData = JSON.parse(addressJson);
+            // Ensure phone is set (from form or profile)
+            addressData.phone = document.getElementById('cust-phone').value || profile.phone;
+            
+            // Name is also needed if someone changes the name in the contact info
+            addressData.name = document.getElementById('cust-name').value || profile.name;
+
             // Fallback for UUID if crypto.randomUUID is not available in non-secure contexts
             const generateUUID = () => {
                 if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -154,17 +281,6 @@ renderCheckout.mount = () => {
                     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                     return v.toString(16);
                 });
-            };
-
-            const customerId = generateUUID();
-            const customerData = {
-                id: customerId,
-                name: document.getElementById('cust-name').value,
-                phone: document.getElementById('cust-phone').value,
-                house: document.getElementById('cust-house').value,
-                street: document.getElementById('cust-street').value,
-                city: document.getElementById('cust-city').value,
-                pin: document.getElementById('cust-pin').value
             };
 
             const orderId = generateUUID();
@@ -175,27 +291,37 @@ renderCheckout.mount = () => {
                     throw new Error("Supabase client is not initialized. Check your config.");
                 }
 
-                // 1. Insert Customer
-                const { data: custData, error: custError } = await supabase
+                // 1. Update customer address (only valid schema fields)
+                const customerUpdateData = {
+                    name: addressData.name,
+                    phone: addressData.phone,
+                    house: addressData.house,
+                    street: addressData.street,
+                    city: addressData.city,
+                    pin: addressData.pin
+                };
+                
+                const { error: addrError } = await supabase
                     .from('customers')
-                    .insert([customerData]);
+                    .update(customerUpdateData)
+                    .eq('id', profile.id);
                     
-                if (custError) {
-                    console.error("Supabase Customer Error:", custError);
-                    throw new Error(`Customer Insert Failed: ${custError.message || JSON.stringify(custError)}`);
+                if (addrError) {
+                    console.warn("Address update warning:", addrError);
                 }
                 
-                // 2. Insert Order
+                // 2. Insert Order linked to authenticated customer
                 const orderData = {
                     id: orderId,
-                    customer_id: customerId,
+                    customer_id: profile.id,
                     items: cart,
                     subtotal: subtotal,
                     delivery_fee: delivery,
                     total: total,
                     payment_method: document.getElementById('payment-method').value,
                     special_instructions: document.getElementById('cust-instructions').value,
-                    status: 'Pending'
+                    status: 'Pending',
+                    delivery_address: addressData
                 };
 
                 const { data: ordData, error: ordError } = await supabase
@@ -226,7 +352,7 @@ renderCheckout.mount = () => {
             } catch (err) {
                 console.error("Order submission error:", err);
                 btn.disabled = false;
-                btn.textContent = 'Place Order - $' + total.toFixed(2);
+                btn.textContent = 'Place Order - ₹' + total.toFixed(2);
                 return; // STOP execution on failure, do not show success modal
             }
             

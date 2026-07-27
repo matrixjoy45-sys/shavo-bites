@@ -61,8 +61,38 @@ serve(async (req) => {
     if (Array.isArray(order.items)) {
         itemsList = order.items.map((item: any) => {
             const price = item.product?.price || 0;
-            return `<li>${item.quantity}x ${item.product?.name || 'Item'} - $${(price * item.quantity).toFixed(2)}</li>`;
+            return `<li>${item.quantity}x ${item.product?.name || 'Item'} - ₹${(price * item.quantity).toFixed(2)}</li>`;
         }).join("");
+    }
+
+    // Fetch full order to ensure we have the database-generated created_at timestamp
+    const { data: dbOrder } = await supabase
+        .from("orders")
+        .select("created_at")
+        .eq("id", order.id)
+        .single();
+        
+    const orderCreatedAt = dbOrder?.created_at || order.created_at;
+
+    let orderTimeStr = "N/A";
+    if (orderCreatedAt) {
+        const d = new Date(orderCreatedAt);
+        if (!isNaN(d.getTime())) {
+            // e.g. "27 Jul 2026, 03:43 AM"
+            orderTimeStr = d.toLocaleString("en-GB", {
+                timeZone: "Asia/Kolkata",
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true
+            }).toUpperCase(); 
+            // en-GB sometimes outputs 'am' / 'pm', uppercase makes it 'AM' / 'PM'
+            // Format might be "27 Jul 2026, 03:43 am". Replace if needed.
+            // Actually en-GB format is "27 Jul 2026, 03:43 am"
+            orderTimeStr = orderTimeStr.replace(/ AM/i, ' AM').replace(/ PM/i, ' PM');
+        }
     }
 
     const emailHtml = `
@@ -73,12 +103,12 @@ serve(async (req) => {
           
           <h3 style="margin-bottom: 5px;">Order Details</h3>
           <p style="margin: 2px 0;"><strong>Order ID:</strong> ${order.id}</p>
-          <p style="margin: 2px 0;"><strong>Order Time:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+          <p style="margin: 2px 0;"><strong>Order Time:</strong> ${orderTimeStr}</p>
           <p style="margin: 2px 0;"><strong>Payment Method:</strong> ${order.payment_method.toUpperCase()}</p>
           
           <h3 style="margin-bottom: 5px; margin-top: 20px;">Customer Details</h3>
           <p style="margin: 2px 0;"><strong>Name:</strong> ${customer.name}</p>
-          <p style="margin: 2px 0;"><strong>Phone:</strong> ${customer.phone}</p>
+          <p style="margin: 2px 0;"><strong>Phone:</strong> ${customer.phone || 'N/A'}</p>
           <p style="margin: 2px 0;"><strong>Address:</strong> ${customer.house}, ${customer.street}, ${customer.city} - ${customer.pin}</p>
           
           <h3 style="margin-bottom: 5px; margin-top: 20px;">Items</h3>
@@ -87,9 +117,9 @@ serve(async (req) => {
           </ul>
           
           <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin-top: 20px;">
-              <p style="margin: 2px 0; display: flex; justify-content: space-between;"><span>Subtotal:</span> <strong>$${order.subtotal}</strong></p>
-              <p style="margin: 2px 0; display: flex; justify-content: space-between;"><span>Delivery Fee:</span> <strong>$${order.delivery_fee}</strong></p>
-              <h3 style="margin: 10px 0 0 0; display: flex; justify-content: space-between; border-top: 1px solid #ddd; padding-top: 10px;"><span>Total Amount:</span> <span style="color: #d4af37;">$${order.total}</span></h3>
+              <p style="margin: 2px 0; display: flex; justify-content: space-between;"><span>Subtotal:</span> <strong>₹${order.subtotal}</strong></p>
+              <p style="margin: 2px 0; display: flex; justify-content: space-between;"><span>Delivery Fee:</span> <strong>₹${order.delivery_fee}</strong></p>
+              <h3 style="margin: 10px 0 0 0; display: flex; justify-content: space-between; border-top: 1px solid #ddd; padding-top: 10px;"><span>Total Amount:</span> <span style="color: #d4af37;">₹${order.total}</span></h3>
           </div>
       </div>
     `;

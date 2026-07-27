@@ -10,9 +10,9 @@ window.appActions = {
 };
 
 const updateAppShell = () => {
-    // Render Header & Footer once (they are static mostly)
+    // Render Header & Footer dynamically on state change
     const headerEl = document.getElementById('site-header');
-    if (!headerEl.innerHTML) headerEl.innerHTML = renderHeader();
+    headerEl.innerHTML = renderHeader();
     
     const footerEl = document.getElementById('site-footer');
     if (!footerEl.innerHTML) footerEl.innerHTML = renderFooter();
@@ -57,6 +57,23 @@ const updateAppShell = () => {
             headerEl.classList.remove('scrolled');
         }
     }, { passive: true });
+    
+    // User Dropdown Logout
+    const navLogoutBtn = document.getElementById('nav-logout-btn');
+    if (navLogoutBtn) {
+        // Ensure we don't attach multiple times if updated
+        const newLogoutBtn = navLogoutBtn.cloneNode(true);
+        navLogoutBtn.parentNode.replaceChild(newLogoutBtn, navLogoutBtn);
+        newLogoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await store.logout();
+                router.navigate('/');
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    }
 };
 
 // Initialize App

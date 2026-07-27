@@ -1,4 +1,5 @@
 import { fetchMenuItems, fetchExtras } from './data.js';
+import { supabase } from './supabase.js';
 
 // State Management (Store)
 class Store {
@@ -6,14 +7,17 @@ class Store {
         this.state = {
             cart: [],
             user: null,
+            customerProfile: null,
             cartOpen: false,
             products: [],
             extras: [],
-            isLoaded: false
+            isLoaded: false,
+            authLoaded: false
         };
         
         this.listeners = [];
         this.loadState();
+        this.initAuth();
     }
     
     // Core State Management
@@ -52,6 +56,78 @@ class Store {
         }
     }
     
+    // Auth Management
+    async initAuth() {
+        if (!supabase) {
+            this.setState({ authLoaded: true });
+            return;
+        }
+
+        // Get initial session
+        const { data: { session } } = await supabase.auth.getSession();
+        await this.handleSessionChange(session);
+
+        // Listen for auth changes
+        supabase.auth.onAuthStateChange(async (_event, session) => {
+            await this.handleSessionChange(session);
+        });
+    }
+
+    async handleSessionChange(session) {
+        if (session && session.user) {
+            // Fetch customer profile
+            const { data: profile } = await supabase
+                .from('customers')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+                
+            this.setState({ 
+                user: session.user, 
+                customerProfile: profile || null,
+                authLoaded: true 
+            });
+        } else {
+            this.setState({ 
+                user: null, 
+                customerProfile: null, 
+                authLoaded: true 
+            });
+        }
+    }
+
+    async login(email, password) {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        return data;
+    }
+
+    async signup(email, password, fullName) {
+        const { data, error } = await supabase.auth.signUp({ 
+            email, 
+            password,
+            options: {
+                data: {
+                    full_name: fullName
+                }
+            }
+        });
+        if (error) throw error;
+        return data;
+    }
+
+    async logout() {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+    }
+
+    async resetPassword(email) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin + '/login'
+        });
+        if (error) throw error;
+    }
+    
     // Persistence
     loadState() {
         try {
@@ -59,7 +135,6 @@ class Store {
             if (saved) {
                 const parsed = JSON.parse(saved);
                 this.state.cart = parsed.cart || [];
-                this.state.user = parsed.user || null;
             }
         } catch (e) {
             console.error('Failed to load state', e);
@@ -69,8 +144,7 @@ class Store {
     saveState() {
         try {
             localStorage.setItem('shavo_state', JSON.stringify({
-                cart: this.state.cart,
-                user: this.state.user
+                cart: this.state.cart
             }));
         } catch (e) {
             console.error('Failed to save state', e);

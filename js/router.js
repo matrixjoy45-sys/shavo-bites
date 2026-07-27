@@ -3,6 +3,10 @@ import { renderHome } from './views/home.js';
 import { renderMenu } from './views/menu.js';
 import { renderCheckout } from './views/checkout.js';
 import { renderProfile } from './views/profile.js';
+import { renderAuth } from './views/auth.js';
+import { renderMyOrders } from './views/orders.js';
+import { renderOrderDetails } from './views/order-details.js';
+import { renderAddresses } from './views/addresses.js';
 import { renderAdminLogin } from './views/admin/login.js';
 import { renderAdminDashboard } from './views/admin/dashboard.js';
 import { renderAdminMenu } from './views/admin/menu.js';
@@ -17,6 +21,9 @@ class Router {
             '/menu': renderMenu,
             '/checkout': renderCheckout,
             '/profile': renderProfile,
+            '/addresses': renderAddresses,
+            '/my-orders': renderMyOrders,
+            '/login': renderAuth,
             '/admin': renderAdminLogin,
             '/admin/dashboard': renderAdminDashboard,
             '/admin/menu': renderAdminMenu,
@@ -47,11 +54,19 @@ class Router {
     
     async handleRoute() {
         let path = window.location.pathname;
+        let renderFunction;
+        let params = {};
         
-        // Handle github pages / local subfolder routing if needed
-        // For local development, assume root is /
-        if (!this.routes[path]) {
+        const orderMatch = path.match(/^\/my-orders\/([a-zA-Z0-9-]+)$/);
+        
+        if (orderMatch) {
+            params.id = orderMatch[1];
+            renderFunction = renderOrderDetails;
+        } else if (this.routes[path]) {
+            renderFunction = this.routes[path];
+        } else {
             path = '/'; // fallback to home
+            renderFunction = this.routes['/'];
         }
         
         // Admin Auth Middleware
@@ -71,24 +86,35 @@ class Router {
             }
         }
         
+        // Customer Auth Middleware
+        const protectedRoutes = ['/checkout', '/profile', '/my-orders', '/addresses'];
+        if (protectedRoutes.includes(path) || path.startsWith('/my-orders/')) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                // Save intended destination
+                sessionStorage.setItem('shavo_auth_next', path);
+                this.navigate('/login');
+                return;
+            }
+        }
+        
         // Auto-close cart drawer on navigation
         if (window.appActions && typeof window.appActions.toggleCart === 'function') {
             window.appActions.toggleCart(false);
         }
         
-        const renderFunction = this.routes[path];
         
         // Fade out current content
         this.rootElement.style.opacity = '0';
         
         setTimeout(async () => {
             // Render new content
-            const html = await renderFunction();
+            const html = await renderFunction(params);
             this.rootElement.innerHTML = html;
             
             // Re-bind events for the new view (if the view has a mount function)
             if (renderFunction.mount) {
-                renderFunction.mount();
+                renderFunction.mount(params);
             }
             
             // Fade in

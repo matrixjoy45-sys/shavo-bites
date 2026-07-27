@@ -36,14 +36,33 @@ CREATE TABLE public.menu_items (
 -- 4. CREATE CUSTOMERS TABLE
 CREATE TABLE public.customers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) UNIQUE,
     name TEXT NOT NULL,
-    phone TEXT NOT NULL,
+    email TEXT,
+    phone TEXT,
     house TEXT,
     street TEXT,
     city TEXT,
     pin TEXT,
+    avatar_url TEXT,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Trigger to automatically create customer profile on signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.customers (user_id, email, name)
+  VALUES (new.id, new.email, COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)));
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 -- 5. CREATE ORDERS TABLE
 CREATE TABLE public.orders (
@@ -103,11 +122,16 @@ CREATE POLICY "Allow auth all on audit_logs" ON public.audit_logs FOR ALL USING 
 -- SUPABASE STORAGE BUCKET
 -- ==========================================
 INSERT INTO storage.buckets (id, name, public) VALUES ('menu-images', 'menu-images', true) ON CONFLICT DO NOTHING;
+INSERT INTO storage.buckets (id, name, public) VALUES ('profile-images', 'profile-images', true) ON CONFLICT DO NOTHING;
 
 CREATE POLICY "Allow public read access on menu-images" ON storage.objects FOR SELECT USING (bucket_id = 'menu-images');
 CREATE POLICY "Allow authenticated insert to menu-images" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'menu-images' AND auth.role() = 'authenticated');
 CREATE POLICY "Allow authenticated update to menu-images" ON storage.objects FOR UPDATE USING (bucket_id = 'menu-images' AND auth.role() = 'authenticated');
 CREATE POLICY "Allow authenticated delete from menu-images" ON storage.objects FOR DELETE USING (bucket_id = 'menu-images' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Allow public read access on profile-images" ON storage.objects FOR SELECT USING (bucket_id = 'profile-images');
+CREATE POLICY "Allow users to insert own profile image" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'profile-images' AND auth.role() = 'authenticated' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Allow users to update own profile image" ON storage.objects FOR UPDATE USING (bucket_id = 'profile-images' AND auth.role() = 'authenticated' AND (storage.foldername(name))[1] = auth.uid()::text);
 
 -- ==========================================
 -- INSERT DEFAULT MENU DATA
