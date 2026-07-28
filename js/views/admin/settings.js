@@ -4,17 +4,25 @@ import { Icons } from '../../components.js';
 
 export const renderAdminSettings = async () => {
     let settings = {};
+    let logoData = null;
+    let logoKey = 'logo_default';
+    
     try {
         const { data, error } = await supabase
             .from('settings')
             .select('*')
-            .eq('type', 'general');
+            .in('type', ['general', 'logo']);
             
         if (error) throw error;
         
         if (data) {
             data.forEach(row => {
-                settings[row.key] = row.value;
+                if (row.type === 'general') {
+                    settings[row.key] = row.value;
+                } else if (row.type === 'logo' && row.value?.is_active !== false) {
+                    logoData = row.value;
+                    logoKey = row.key;
+                }
             });
         }
     } catch(e) {
@@ -65,6 +73,21 @@ export const renderAdminSettings = async () => {
                 <div class="form-group mb-md">
                     <label class="form-label">Minimum Order Amount (₹)</label>
                     <input type="number" id="setting-min-order" class="form-input" step="0.01" value="${minOrder.amount}" required>
+                </div>
+            </div>
+            
+            <!-- Branding Settings -->
+            <div class="glass-card p-lg" style="padding: var(--space-xl); grid-column: 1 / -1;">
+                <h3 class="mb-md text-white border-b pb-sm" style="border-bottom: 1px solid rgba(255,255,255,0.1);">Branding & Logo</h3>
+                
+                <div class="form-group mb-md">
+                    <label class="form-label">Upload New Logo</label>
+                    <div class="flex items-center gap-md">
+                        ${logoData?.image_url ? `<img src="${logoData.image_url.startsWith('http') || logoData.image_url.startsWith('/assets/') ? logoData.image_url : supabase.storage.from('menu-images').getPublicUrl(logoData.image_url).data?.publicUrl}" alt="Current Logo" style="height: 50px; background: rgba(255,255,255,0.1); padding: 5px; border-radius: var(--radius-sm); object-fit: contain;">` : `<div style="height:50px; width:50px; background:rgba(255,255,255,0.1); border-radius: var(--radius-sm); display:flex; align-items:center; justify-content:center;" class="text-xs text-muted">No Logo</div>`}
+                        <input type="file" id="setting-logo-upload" class="form-input flex-1" accept="image/png, image/jpeg, image/webp">
+                        <input type="hidden" id="setting-logo-key" value="${logoKey}">
+                        <input type="hidden" id="setting-logo-current" value="${logoData?.image_url || ''}">
+                    </div>
                 </div>
             </div>
             
@@ -177,6 +200,29 @@ renderAdminSettings.mount = () => {
                         whatsapp: document.getElementById('setting-whatsapp').value
                     }
                 }, { onConflict: 'key' });
+                
+                // Upload Logo if provided
+                const logoFile = document.getElementById('setting-logo-upload').files[0];
+                let finalLogoUrl = document.getElementById('setting-logo-current').value;
+                const logoKeyToUse = document.getElementById('setting-logo-key').value || ('logo_' + Date.now());
+                
+                if (logoFile) {
+                    const ext = logoFile.name.split('.').pop();
+                    const fileName = `logo_${Date.now()}.${ext}`;
+                    const { data: uploadData, error: uploadError } = await supabase.storage
+                        .from('menu-images')
+                        .upload(fileName, logoFile);
+                        
+                    if (uploadError) throw uploadError;
+                    finalLogoUrl = uploadData.path;
+                    
+                    // Upsert logo setting
+                    await supabase.from('settings').upsert({
+                        key: logoKeyToUse,
+                        type: 'logo',
+                        value: { image_url: finalLogoUrl, is_active: true }
+                    }, { onConflict: 'key' });
+                }
                 
                 // Audit log
                 const { data: { user } } = await supabase.auth.getUser();

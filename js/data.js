@@ -18,7 +18,7 @@ const mockProducts = [
         description: 'Tender beef slices, tahini sauce, parsley, and onions in fresh pita.',
         price: 14.99,
         category: 'shawarma',
-        image: '/assets/images/beef.webp',
+        image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=500&q=80',
         spiceLevel: 'mild',
         ingredients: ['Beef', 'Tahini', 'Onions', 'Parsley', 'Tomatoes']
     },
@@ -28,7 +28,7 @@ const mockProducts = [
         description: 'Crispy fried calamari and grilled squid rings with our signature garlic sauce.',
         price: 16.99,
         category: 'shawarma',
-        image: '/assets/images/squid.webp',
+        image: 'https://images.unsplash.com/photo-1549488344-1f9b8d2bd1f3?auto=format&fit=crop&w=500&q=80',
         spiceLevel: 'spicy',
         ingredients: ['Squid', 'Garlic Sauce', 'Lettuce', 'Spicy Mayo']
     },
@@ -38,7 +38,7 @@ const mockProducts = [
         description: 'Rich dates blended with premium milk, topped with whipped cream and nuts.',
         price: 8.99,
         category: 'drinks',
-        image: '/assets/images/dates.webp',
+        image: 'https://images.unsplash.com/photo-1553530666-ba11a7ddbb44?auto=format&fit=crop&w=500&q=80',
         spiceLevel: 'none',
         ingredients: ['Dates', 'Milk', 'Cream', 'Nuts']
     },
