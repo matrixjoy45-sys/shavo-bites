@@ -8,11 +8,9 @@ export const renderAdminLayout = (content, activeRoute) => {
         { path: '/admin/menu', name: 'Menu' }
     ];
     
-    if (role === 'super_admin') {
-        navItems.push({ path: '/admin/settings', name: 'Settings' });
-        navItems.push({ path: '/admin/offers', name: 'Offers' });
-        navItems.push({ path: '/admin/banners', name: 'Banners' });
-    }
+    navItems.push({ path: '/admin/settings', name: 'Settings' });
+    navItems.push({ path: '/admin/offers', name: 'Offers' });
+    navItems.push({ path: '/admin/banners', name: 'Banners' });
     
     const navHtml = navItems.map(item => `
         <a href="${item.path}" data-link class="admin-nav-link ${item.path === activeRoute ? 'active' : ''}" style="display:flex; align-items:center; gap:0.5rem; padding:1rem; color:${item.path === activeRoute ? 'var(--color-primary)' : 'var(--color-text-muted)'}; background:${item.path === activeRoute ? 'rgba(212,175,55,0.1)' : 'transparent'}; border-radius: var(--radius-sm); margin-bottom:0.5rem; text-decoration:none; transition: all 0.2s;">
