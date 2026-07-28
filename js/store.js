@@ -76,11 +76,55 @@ class Store {
     async handleSessionChange(session) {
         if (session && session.user) {
             // Fetch customer profile
-            const { data: profile } = await supabase
+            let { data: profile, error } = await supabase
                 .from('customers')
                 .select('*')
                 .eq('user_id', session.user.id)
-                .single();
+                .maybeSingle(); // Prevents 406 error if zero rows
+
+            // If profile does not exist by user_id, try to repair or create
+            if (!profile) {
+                console.log("Profile not found by user_id. Attempting repair...");
+                
+                // Check if a profile exists with the same email but missing user_id
+                const { data: existingProfile } = await supabase
+                    .from('customers')
+                    .select('*')
+                    .eq('email', session.user.email)
+                    .is('user_id', null)
+                    .maybeSingle();
+
+                if (existingProfile) {
+                    // Repair it by linking the user_id
+                    const { data: repairedProfile, error: repairError } = await supabase
+                        .from('customers')
+                        .update({ user_id: session.user.id })
+                        .eq('id', existingProfile.id)
+                        .select()
+                        .single();
+
+                    if (!repairError && repairedProfile) {
+                        profile = repairedProfile;
+                        console.log("Profile repaired successfully.");
+                    }
+                } else {
+                    // Automatically create it
+                    const { data: newProfile, error: insertError } = await supabase
+                        .from('customers')
+                        .insert([{
+                            user_id: session.user.id,
+                            email: session.user.email,
+                            name: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
+                        }])
+                        .select()
+                        .single();
+                        
+                    if (!insertError && newProfile) {
+                        profile = newProfile;
+                        console.log("New profile created automatically.");
+                    }
+                }
+            }
                 
             this.setState({ 
                 user: session.user, 
