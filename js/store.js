@@ -71,6 +71,7 @@ class Store {
                 extras, 
                 logoUrl: activeLogo?.value?.image_url || '',
                 bannerUrl: activeBanner?.value?.image_url || '',
+                bannerData: activeBanner?.value || null,
                 isLoaded: true 
             });
         } catch (e) {

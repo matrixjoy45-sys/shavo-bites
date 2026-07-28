@@ -95,7 +95,7 @@ renderAdminBanners.mount = () => {
             const container = document.getElementById('admin-modal-container');
             container.innerHTML = `
                 <div class="cart-overlay" style="opacity: 1; pointer-events: auto; z-index: 1000;" id="admin-modal-overlay"></div>
-                <div class="glass-card" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; width: 95%; max-width: 500px; padding: var(--space-xl);">
+                <div class="glass-card" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; width: 95%; max-width: 500px; padding: var(--space-xl); max-height: 90vh; overflow-y: auto;">
                     <div class="flex justify-between items-center mb-lg pb-sm" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                         <h3>Upload Hero Banner</h3>
                         <button class="btn-icon" id="admin-close-modal-btn">${Icons.Close}</button>

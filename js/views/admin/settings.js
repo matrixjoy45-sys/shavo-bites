@@ -83,7 +83,8 @@ export const renderAdminSettings = async () => {
                 <div class="form-group mb-md">
                     <label class="form-label">Upload New Logo</label>
                     <div class="flex items-center gap-md">
-                        ${logoData?.image_url ? `<img src="${logoData.image_url.startsWith('http') || logoData.image_url.startsWith('/assets/') ? logoData.image_url : supabase.storage.from('menu-images').getPublicUrl(logoData.image_url).data?.publicUrl}" alt="Current Logo" style="height: 50px; background: rgba(255,255,255,0.1); padding: 5px; border-radius: var(--radius-sm); object-fit: contain;">` : `<div style="height:50px; width:50px; background:rgba(255,255,255,0.1); border-radius: var(--radius-sm); display:flex; align-items:center; justify-content:center;" class="text-xs text-muted">No Logo</div>`}
+                        <img id="setting-logo-preview" src="${logoData?.image_url ? (logoData.image_url.startsWith('http') || logoData.image_url.startsWith('/assets/') ? logoData.image_url : supabase.storage.from('menu-images').getPublicUrl(logoData.image_url).data?.publicUrl) : 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" alt="Current Logo" style="height: 50px; width: 50px; background: rgba(255,255,255,0.1); padding: 5px; border-radius: var(--radius-sm); object-fit: contain; ${!logoData?.image_url ? 'display:none;' : ''}">
+                        ${!logoData?.image_url ? `<div id="setting-logo-placeholder" style="height:50px; width:50px; background:rgba(255,255,255,0.1); border-radius: var(--radius-sm); display:flex; align-items:center; justify-content:center;" class="text-xs text-muted">No Logo</div>` : ''}
                         <input type="file" id="setting-logo-upload" class="form-input flex-1" accept="image/png, image/jpeg, image/webp">
                         <input type="hidden" id="setting-logo-key" value="${logoKey}">
                         <input type="hidden" id="setting-logo-current" value="${logoData?.image_url || ''}">
@@ -161,6 +162,29 @@ renderAdminSettings.mount = () => {
         }, 4000);
     };
 
+    // Add Logo preview functionality
+    const logoUpload = document.getElementById('setting-logo-upload');
+    if (logoUpload) {
+        logoUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.getElementById('setting-logo-preview');
+                    const placeholder = document.getElementById('setting-logo-placeholder');
+                    if (preview) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    if (placeholder) {
+                        placeholder.style.display = 'none';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
     const form = document.getElementById('admin-settings-form');
     if (form) {
         form.addEventListener('submit', async (e) => {
@@ -234,6 +258,9 @@ renderAdminSettings.mount = () => {
                 }]);
                 
                 showToast('Settings saved successfully!');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             } catch (error) {
                 console.error(error);
                 showToast('Failed to save settings: ' + error.message, 'error');

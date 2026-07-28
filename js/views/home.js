@@ -4,8 +4,11 @@ import { getImageUrl } from '../supabase.js';
 
 export const renderHome = async () => {
     // Get popular items from store
-    const { products } = store.getState();
+    const { products, bannerData, bannerUrl } = store.getState();
     const popularItems = products.slice(0, 3);
+    
+    const bannerTitle = bannerData?.title ? bannerData.title.split('.').join('.<br>') : '<span class="text-primary">BIG FLAVOR.</span><br>EVERY BITE.';
+    const bannerDesc = bannerData?.description || 'Experience the most luxurious delivery-only shawarma in town. Premium ingredients, crafted to perfection.';
     
     const productCards = popularItems.map((p, i) => `
         <div class="glass-card product-card fade-in stagger-${i+1}">
@@ -39,11 +42,10 @@ export const renderHome = async () => {
                 <div class="container slide-up">
                     <div style="max-width: 600px;">
                         <h1 class="mb-md" style="text-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-                            <span class="text-primary">BIG FLAVOR.</span><br>
-                            EVERY BITE.
+                            ${bannerTitle}
                         </h1>
                         <p class="text-lg text-muted mb-lg">
-                            Experience the most luxurious delivery-only shawarma in town. Premium ingredients, crafted to perfection.
+                            ${bannerDesc}
                         </p>
                         <div class="flex gap-md">
                             <a href="/menu" data-link class="btn btn-primary">Order Now</a>
