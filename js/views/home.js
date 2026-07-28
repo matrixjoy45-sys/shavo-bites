@@ -1,5 +1,6 @@
 import { Icons } from '../components.js';
 import { store } from '../store.js';
+import { getImageUrl } from '../supabase.js';
 
 export const renderHome = async () => {
     // Get popular items from store
@@ -9,7 +10,7 @@ export const renderHome = async () => {
     const productCards = popularItems.map((p, i) => `
         <div class="glass-card product-card fade-in stagger-${i+1}">
             <div class="product-img-wrapper">
-                <img src="${p.image_url || p.image}" alt="${p.name}" class="product-img" loading="lazy">
+                <img src="${getImageUrl(p.image_url || p.image)}" alt="${p.name}" class="product-img" loading="lazy">
             </div>
             <div class="product-info">
                 <div class="flex justify-between items-center mb-xs">
@@ -32,7 +33,7 @@ export const renderHome = async () => {
                 <!-- Background Image & Gradient -->
                 <div style="position: absolute; top:0; left:0; width:100%; height:100%; z-index:-1; overflow:hidden;">
                     <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to right, rgba(10,10,10,0.9) 0%, rgba(10,10,10,0.4) 100%); z-index:1;"></div>
-                    <img src="/assets/images/hero.webp" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" alt="Hero" fetchpriority="high" decoding="sync">
+                    ${store.getState().bannerUrl ? `<img src="${getImageUrl(store.getState().bannerUrl)}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" alt="Hero" fetchpriority="high" decoding="sync">` : `<div style="width:100%; height:100%; background:var(--color-background); transform:scale(1.05);"></div>`}
                 </div>
                 
                 <div class="container slide-up">

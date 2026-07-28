@@ -11,7 +11,7 @@ export const renderAdminLogin = async () => {
                 <form id="admin-login-form">
                     <div class="form-group mb-md">
                         <label class="form-label">Email Address</label>
-                        <input type="email" id="admin-email" class="form-input" required placeholder="admin@shavobites.com">
+                        <input type="email" id="admin-email" class="form-input" required placeholder="admin@example.com">
                     </div>
                     <div class="form-group mb-xl">
                         <label class="form-label">Password</label>

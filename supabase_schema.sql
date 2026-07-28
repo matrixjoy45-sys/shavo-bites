@@ -137,7 +137,7 @@ CREATE POLICY "Allow users to update own profile image" ON storage.objects FOR U
 -- INSERT DEFAULT MENU DATA
 -- ==========================================
 INSERT INTO public.menu_items (id, name, description, price, category, image, "spiceLevel", ingredients) VALUES
-('p1', 'Chicken Shawarma', 'Juicy spiced chicken, fresh vegetables, garlic sauce wrapped in premium pita.', 12.99, 'shawarma', '/assets/images/hero.webp', 'medium', '["Chicken", "Garlic Sauce", "Pickles", "Fries inside", "Pita"]'),
+('p1', 'Chicken Shawarma', 'Juicy spiced chicken, fresh vegetables, garlic sauce wrapped in premium pita.', 12.99, 'shawarma', 'https://images.unsplash.com/photo-1529144415895-6aaf8be872fb?auto=format&fit=crop&w=500&q=80', 'medium', '["Chicken", "Garlic Sauce", "Pickles", "Fries inside", "Pita"]'),
 ('p2', 'Beef Shawarma', 'Tender beef slices, tahini sauce, parsley, and onions in fresh pita.', 14.99, 'shawarma', '/assets/images/beef.webp', 'mild', '["Beef", "Tahini", "Onions", "Parsley", "Tomatoes"]'),
 ('p3', 'Squid Shawarma', 'Crispy fried calamari and grilled squid rings with our signature garlic sauce.', 16.99, 'shawarma', '/assets/images/squid.webp', 'spicy', '["Squid", "Garlic Sauce", "Lettuce", "Spicy Mayo"]'),
 ('p4', 'Premium Dates Shake', 'Rich dates blended with premium milk, topped with whipped cream and nuts.', 8.99, 'drinks', '/assets/images/dates.webp', 'none', '["Dates", "Milk", "Cream", "Nuts"]'),

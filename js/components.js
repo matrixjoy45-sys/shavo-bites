@@ -1,4 +1,5 @@
 import { store } from './store.js';
+import { getImageUrl } from './supabase.js';
 
 // SVG Icons
 export const Icons = {
@@ -29,13 +30,14 @@ export const renderHeader = () => {
            </div>`
         : `<a href="/login" data-link class="nav-link font-bold text-primary">Login</a>`;
 
+    const logoHtml = state.logoUrl 
+        ? `<img src="${getImageUrl(state.logoUrl)}" alt="SHAVO BITES Logo" style="height: 56px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">`
+        : `<h2 class="text-primary font-bold" style="margin:0; font-size: 24px;">SHAVO BITES</h2>`;
+
     return `
         <div class="container flex justify-between items-center">
             <a href="/" data-link class="logo flex items-center">
-                <picture>
-                    <source srcset="/assets/images/logo-master.webp" type="image/webp">
-                    <img src="/assets/images/logo-master.png" alt="SHAVO BITES Logo" style="height: 56px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
-                </picture>
+                ${logoHtml}
             </a>
             
             <nav class="hidden md:flex gap-lg items-center">
@@ -58,14 +60,16 @@ export const renderHeader = () => {
 };
 
 export const renderFooter = () => {
+    const state = store.getState();
+    const logoHtml = state.logoUrl 
+        ? `<img src="${getImageUrl(state.logoUrl)}" alt="SHAVO BITES Logo" style="height: 64px; width: auto; object-fit: contain; margin-bottom: 1rem;">`
+        : `<h2 class="text-primary font-bold mb-md" style="margin:0; font-size: 24px;">SHAVO BITES</h2>`;
+        
     return `
         <div class="glass" style="margin-top: auto; padding: var(--space-xl) 0;">
             <div class="container grid md:grid-cols-4 gap-xl">
                 <div>
-                    <picture>
-                        <source srcset="/assets/images/logo-master.webp" type="image/webp">
-                        <img src="/assets/images/logo-master.png" alt="SHAVO BITES Logo" style="height: 64px; width: auto; object-fit: contain; margin-bottom: 1rem;">
-                    </picture>
+                    ${logoHtml}
                     <p class="text-muted text-sm">Big Flavor. Every Bite.<br>Premium delivery-only shawarma.</p>
                 </div>
                 <div>
@@ -86,7 +90,7 @@ export const renderFooter = () => {
                 </div>
                 <div>
                     <h4 class="mb-md">Contact</h4>
-                    <p class="text-muted text-sm mb-sm">Email: hello@shavobites.com</p>
+                    <p class="text-muted text-sm mb-sm">Email: hello@${window.location.hostname}</p>
                     <p class="text-muted text-sm mb-sm">Phone: +1 234 567 8900</p>
                     <div class="flex gap-sm mt-md">
                         <!-- Social Icons Placeholders -->
@@ -120,7 +124,7 @@ export const renderCartDrawer = () => {
     } else {
         cartItemsHtml = cart.map(item => `
             <div class="cart-item">
-                <img src="${item.product.image}" alt="${item.product.name}" class="cart-item-img">
+                <img src="${getImageUrl(item.product.image)}" alt="${item.product.name}" class="cart-item-img">
                 <div class="flex-1">
                     <div class="flex justify-between">
                         <h4 class="text-sm font-bold">${item.product.name}</h4>

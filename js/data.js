@@ -8,7 +8,7 @@ const mockProducts = [
         description: 'Juicy spiced chicken, fresh vegetables, garlic sauce wrapped in premium pita.',
         price: 12.99,
         category: 'shawarma',
-        image: '/assets/images/hero.webp', 
+        image: 'https://images.unsplash.com/photo-1529144415895-6aaf8be872fb?auto=format&fit=crop&w=500&q=80',
         spiceLevel: 'medium',
         ingredients: ['Chicken', 'Garlic Sauce', 'Pickles', 'Fries inside', 'Pita']
     },

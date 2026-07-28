@@ -1,4 +1,4 @@
-import { supabase } from '../../supabase.js';
+import { supabase, getImageUrl } from '../../supabase.js';
 import { renderAdminLayout } from './layout.js';
 import { Icons } from '../../components.js';
 
@@ -25,7 +25,7 @@ export const renderAdminBanners = async () => {
         return `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <td style="padding: 1rem;">
-                    <img src="${val.image_url}" alt="Banner" style="width: 120px; height: 60px; border-radius: var(--radius-sm); object-fit: cover;">
+                    <img src="${getImageUrl(val.image_url)}" alt="Banner" style="width: 120px; height: 60px; border-radius: var(--radius-sm); object-fit: cover;">
                 </td>
                 <td style="padding: 1rem;">
                     <div style="font-weight: bold;">${val.title}</div>
@@ -150,16 +150,12 @@ renderAdminBanners.mount = () => {
                         .upload('banners/' + fileName, file);
                         
                     if (uploadError) throw uploadError;
-                    
-                    const { data: publicUrlData } = supabase.storage
-                        .from('menu-images')
-                        .getPublicUrl('banners/' + fileName);
                         
                     const payload = {
                         title: document.getElementById('banner-title').value,
                         subtitle: document.getElementById('banner-subtitle').value,
                         desc: document.getElementById('banner-desc').value,
-                        image_url: publicUrlData.publicUrl,
+                        image_url: 'banners/' + fileName,
                         is_active: document.getElementById('banner-active').checked
                     };
                     

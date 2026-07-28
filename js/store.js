@@ -45,11 +45,34 @@ class Store {
     // Initialize Data from Supabase
     async initData() {
         try {
-            const [products, extras] = await Promise.all([
-                fetchMenuItems(),
-                fetchExtras()
-            ]);
-            this.setState({ products, extras, isLoaded: true });
+            let products = [];
+            let extras = [];
+            let settings = [];
+            
+            if (supabase) {
+                const [productsRes, extrasRes, settingsRes] = await Promise.all([
+                    fetchMenuItems(),
+                    fetchExtras(),
+                    supabase.from('settings').select('*').in('type', ['logo', 'banner'])
+                ]);
+                products = productsRes || [];
+                extras = extrasRes || [];
+                settings = settingsRes?.data || [];
+            } else {
+                products = await fetchMenuItems();
+                extras = await fetchExtras();
+            }
+            
+            const activeLogo = settings.find(s => s.type === 'logo' && s.value?.is_active !== false);
+            const activeBanner = settings.find(s => s.type === 'banner' && s.value?.is_active !== false);
+            
+            this.setState({ 
+                products, 
+                extras, 
+                logoUrl: activeLogo?.value?.image_url || '',
+                bannerUrl: activeBanner?.value?.image_url || '',
+                isLoaded: true 
+            });
         } catch (e) {
             console.error('Failed to init data:', e);
             this.setState({ isLoaded: true }); // Still mark loaded to unblock UI

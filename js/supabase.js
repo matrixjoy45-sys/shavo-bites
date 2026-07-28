@@ -17,3 +17,19 @@ try {
 }
 
 export const supabase = client;
+
+// Centralized helper to safely resolve image URLs
+export const getImageUrl = (path, bucket = 'menu-images') => {
+    if (!path) return '';
+    // If it's already an absolute URL, return it
+    if (path.startsWith('http')) return path;
+    // If it's a local static asset (like fallback defaults), return it
+    if (path.startsWith('/assets/')) return path;
+    
+    // Otherwise, it must be a storage path. Generate the public URL dynamically.
+    if (supabase) {
+        const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+        return data?.publicUrl || '';
+    }
+    return '';
+};

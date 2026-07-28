@@ -1,5 +1,6 @@
 import { Icons } from '../components.js';
 import { store } from '../store.js';
+import { getImageUrl } from '../supabase.js';
 
 export const renderMenu = async () => {
     const { products } = store.getState();
@@ -19,7 +20,7 @@ export const renderMenu = async () => {
             return `
             <div class="glass-card product-card">
                 <div class="product-img-wrapper">
-                    <img src="${p.image_url || p.image}" alt="${p.name}" class="product-img" loading="lazy">
+                    <img src="${getImageUrl(p.image_url || p.image)}" alt="${p.name}" class="product-img" loading="lazy">
                 </div>
                 <div class="product-info">
                     <div class="flex justify-between items-center mb-sm">
@@ -96,7 +97,7 @@ renderMenu.mount = () => {
                     </div>
                     
                     <div class="mb-md">
-                        <img src="${product.image_url || product.image}" alt="${product.name}" style="width:100%; height:200px; object-fit:cover; border-radius:var(--radius-sm);">
+                        <img src="${getImageUrl(product.image_url || product.image)}" alt="${product.name}" style="width:100%; height:200px; object-fit:cover; border-radius:var(--radius-sm);">
                     </div>
                     
                     <div class="mb-lg">

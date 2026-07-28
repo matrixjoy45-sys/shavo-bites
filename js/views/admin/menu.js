@@ -1,4 +1,4 @@
-import { supabase } from '../../supabase.js';
+import { supabase, getImageUrl } from '../../supabase.js';
 import { renderAdminLayout } from './layout.js';
 import { Icons } from '../../components.js';
 
@@ -30,7 +30,7 @@ export const renderAdminMenu = async () => {
         return `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); ${isDeleted ? 'opacity: 0.5;' : ''}">
                 <td style="padding: 1rem;">
-                    <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px; border-radius: var(--radius-sm); object-fit: cover;">
+                    <img src="${getImageUrl(item.image)}" alt="${item.name}" style="width: 50px; height: 50px; border-radius: var(--radius-sm); object-fit: cover;">
                 </td>
                 <td style="padding: 1rem; font-weight: bold;">${item.name}</td>
                 <td style="padding: 1rem;" class="capitalize">${item.category}</td>
@@ -255,7 +255,7 @@ renderAdminMenu.mount = () => {
                         
                         <div class="form-group mb-lg">
                             <label class="form-label">Product Image</label>
-                            ${isEditing && item.image ? `<div class="mb-sm"><img src="${item.image}" style="width: 100px; border-radius: var(--radius-sm);"></div>` : ''}
+                            ${isEditing && item.image ? `<div class="mb-sm"><img src="${getImageUrl(item.image)}" style="width: 100px; border-radius: var(--radius-sm);"></div>` : ''}
                             <input type="file" id="menu-image-upload" class="form-input" accept="image/png, image/jpeg, image/webp" ${isEditing ? '' : 'required'}>
                             <p class="text-xs text-muted mt-xs">Max 5MB. Will be automatically optimized to WebP.</p>
                         </div>
@@ -315,11 +315,8 @@ renderAdminMenu.mount = () => {
                             
                         if (uploadError) throw new Error("Image Upload Failed: " + uploadError.message);
                         
-                        const { data: publicUrlData } = supabase.storage
-                            .from('menu-images')
-                            .getPublicUrl(fileName);
-                            
-                        imageUrl = publicUrlData.publicUrl;
+                        // Store just the filename/path
+                        imageUrl = fileName;
                     }
                     
                     saveBtn.innerHTML = 'Saving to Database...';
